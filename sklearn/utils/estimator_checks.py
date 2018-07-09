@@ -118,6 +118,10 @@ def _yield_non_meta_checks(name, estimator):
     # give the same answer as before.
     yield check_estimators_pickle
 
+    # Test that estimators which accept precomputed data
+    # have the _pairwise estimator tag
+    yield check_pairwise_estimator_tag
+
 
 def _yield_classifier_checks(name, classifier):
     # test classifiers can handle non-array data
@@ -1189,6 +1193,52 @@ def check_estimators_pickle(name, estimator_orig):
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
         assert_allclose_dense_sparse(result[method], unpickled_result)
+
+def check_pairwise_estimator_tag(name, estimator_orig):
+    attributes_to_check = [('metric', 'precomputed'), ('affinity', 'precomputed'), ('kernel', 'precomputed')]
+
+    # Using iris as sample data
+    iris = load_iris()
+    X, y_ = iris.data, iris.target
+    distance_matrix = pairwise_distances(X)
+
+    for attribute, attribute_value in attributes_to_check:
+        # Check to see if attribute value is supported by estimator
+        if getattr(estimator_orig(), attribute, None) == None:
+            continue
+        try:
+            # Construct new object of estimator with desired attribute value
+            print ("Checking {0} for attr {1}={2}".format(name, attribute, attribute_value))
+            modified_estimator = estimator_orig(**{attribute: attribute_value})
+            # Not all estimators validate parameters, so check fit()
+            modified_estimator.fit(X=distance_matrix, y=y_)
+        except (ValueError, KeyError):
+            # Estimator does not support given attribute value
+            print ("\tAttribute not found...skipping")
+            continue
+
+        # Also check to see if non-square distance matrix raises an error
+        try:
+            print ("\tChecking for non-sq error")
+            non_square_distance = distance_matrix[:, :-1]
+            if getattr(modified_estimator, 'fit_predict', None) != None:
+                modified_estimator.fit_predict(X=non_square_distance, y=y_)
+            elif getattr(modified_estimator, 'fit_transform', None) != None:
+                modified_estimator.fit_transform(X=non_square_distance, y=y_)
+            elif getattr(modified_estimator, 'fit', None) != None:
+                modified_estimator.fit(X=non_square_distance, y=y_)
+                if getattr(modified_estimator, 'predict', None) != None:
+                    modified_estimator.predict(X=X)
+        except ValueError:
+            # Check if estimator defines _pairwise attribute
+            assert_not_equal(getattr(modified_estimator, '_pairwise', None),
+                             None,
+                             msg="{0} implements {1}={2} but does not implement"
+                                 "'_pairwise' estimator tag".format(name, attribute, attribute_value))
+        else:
+            # Estimator does not raise an error - skip
+            print ("\tNon-sq error not found")
+            continue
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

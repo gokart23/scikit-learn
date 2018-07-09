@@ -33,7 +33,8 @@ from sklearn.utils.estimator_checks import (
     set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
-    check_class_weight_balanced_linear_classifier)
+    check_class_weight_balanced_linear_classifier,
+    check_pairwise_estimator_tag)
 
 
 def test_all_estimator_no_base_class():
@@ -51,6 +52,13 @@ def test_all_estimators():
     # properly
     assert_greater(len(estimators), 0)
 
+@pytest.mark.parametrize(
+        'name, Estimator',
+        all_estimators(include_meta_estimators=False)
+)
+def test_pairwise_tag(name, Estimator):
+    print ("Checking {0}".format(name))
+    check_pairwise_estimator_tag(name, Estimator)
 
 @pytest.mark.parametrize(
         'name, Estimator',
