@@ -118,10 +118,6 @@ def _yield_non_meta_checks(name, estimator):
     # give the same answer as before.
     yield check_estimators_pickle
 
-    # Test that estimators which accept precomputed data
-    # have the _pairwise estimator tag
-    yield check_pairwise_estimator_tag
-
 
 def _yield_classifier_checks(name, classifier):
     # test classifiers can handle non-array data
@@ -268,6 +264,7 @@ def _yield_all_checks(name, estimator):
     yield check_get_params_invariance
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
+    yield check_pairwise_estimator_tag
 
 
 def check_estimator(Estimator):
@@ -1204,22 +1201,19 @@ def check_pairwise_estimator_tag(name, estimator_orig):
 
     for attribute, attribute_value in attributes_to_check:
         # Check to see if attribute value is supported by estimator
-        if getattr(estimator_orig(), attribute, None) == None:
+        if getattr(estimator_orig, attribute, None) == None:
             continue
         try:
             # Construct new object of estimator with desired attribute value
-            print ("Checking {0} for attr {1}={2}".format(name, attribute, attribute_value))
-            modified_estimator = estimator_orig(**{attribute: attribute_value})
+            modified_estimator = estimator_orig.__class__(**{attribute: attribute_value})
             # Not all estimators validate parameters, so check fit()
             modified_estimator.fit(X=distance_matrix, y=y_)
         except (ValueError, KeyError):
             # Estimator does not support given attribute value
-            print ("\tAttribute not found...skipping")
             continue
 
         # Also check to see if non-square distance matrix raises an error
         try:
-            print ("\tChecking for non-sq error")
             non_square_distance = distance_matrix[:, :-1]
             if getattr(modified_estimator, 'fit_predict', None) != None:
                 modified_estimator.fit_predict(X=non_square_distance, y=y_)
@@ -1237,7 +1231,6 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                                  "'_pairwise' estimator tag".format(name, attribute, attribute_value))
         else:
             # Estimator does not raise an error - skip
-            print ("\tNon-sq error not found")
             continue
 
 
