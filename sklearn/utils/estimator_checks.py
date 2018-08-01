@@ -1202,10 +1202,6 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                         if getattr(estimator_orig, '_pairwise', None) is None
                         else True)
 
-    # While testing, we shall set a value to indicate
-    # if _pairwise attribute is required
-    requires_pairwise_tag = False
-
     # Using iris as sample data
     iris = load_iris()
     X, y_ = iris.data, iris.target
@@ -1238,9 +1234,6 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                 if getattr(modified_estimator, 'predict', None) is not None:
                     modified_estimator.predict(X)
         except ValueError:
-            # The estimator should have _pairwise attribute
-            requires_pairwise_tag = True
-
             # Check if estimator defines _pairwise attribute
             assert_true(has_pairwise_tag,
                         msg="{0} implements {1}={2} but does"
@@ -1249,12 +1242,6 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         else:
             # Estimator does not raise an error - skip
             continue
-
-    if has_pairwise_tag is True:
-        assert_true(requires_pairwise_tag,
-                    msg="{0} implements '_pairwise' estimator tag but does not"
-                        "implement supporting attributes and/or functionality"
-                        "".format(name))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
