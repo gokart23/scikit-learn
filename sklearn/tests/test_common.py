@@ -33,8 +33,17 @@ from sklearn.utils.estimator_checks import (
     set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
+    check_pairwise_estimator_tag,
     check_class_weight_balanced_linear_classifier)
 
+
+@pytest.mark.parametrize(
+    'name, Estimator',
+    all_estimators(include_meta_estimators=False)
+)
+def test_pairwise_tag(name, Estimator):
+    print ("Checking {name}".format(name=name))
+    check_pairwise_estimator_tag(name, Estimator())
 
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
