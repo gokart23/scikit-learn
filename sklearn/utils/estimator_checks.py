@@ -1199,10 +1199,10 @@ def check_pairwise_estimator_tag(name, estimator_orig):
 
     # Check if _pairwise attribute is present - will be used later
     has_pairwise_tag = (False
-                        if getattr(estimator_orig, '_pairwise',None) is None
+                        if getattr(estimator_orig, '_pairwise', None) is None
                         else True)
 
-    # While testing, we shall set a value to indicate 
+    # While testing, we shall set a value to indicate
     # if _pairwise attribute is required
     requires_pairwise_tag = False
 
@@ -1218,7 +1218,7 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         try:
             # Construct new object of estimator with desired attribute value
             modified_estimator = clone(estimator_orig).set_params(
-                                                **{attribute:attribute_value})
+                                                **{attribute: attribute_value})
             # Not all estimators validate parameters, so check fit()
             modified_estimator.fit(distance_matrix, y_)
         except (TypeError, ValueError, KeyError):
